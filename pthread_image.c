@@ -4,6 +4,8 @@
 #include <string.h>
 #include "image.h"
 
+#define THREAD_COUNT 10
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -59,13 +61,55 @@ uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm){
 void convolute(Image* srcImage,Image* destImage,Matrix algorithm){
     int row,pix,bit,span;
     span=srcImage->bpp*srcImage->bpp;
-    for (row=0;row<srcImage->height;row++){
-        for (pix=0;pix<srcImage->width;pix++){
-            for (bit=0;bit<srcImage->bpp;bit++){
-                destImage->data[Index(pix,row,srcImage->width,bit,srcImage->bpp)]=getPixelValue(srcImage,pix,row,bit,algorithm);
-            }
-        }
+    long rank;
+    
+    //setup pthreads
+    pthread_t* thread_handles = (pthread_t*)malloc(THREAD_COUNT*sizeof(pthread_t));
+    thread_arg* thread_args = (thread_arg*)malloc(THREAD_COUNT*sizeof(thread_arg));
+    
+    //create the arguments to be passed in and then create the thread
+    for (rank=0;rank<THREAD_COUNT;rank++){
+    	thread_args[rank].srcImage = srcImage;
+	thread_args[rank].destImage = destImage;
+	thread_args[rank].algorithm = algorithm;
+	thread_args[rank].rank = rank;
+	pthread_create(&thread_handles[rank],NULL,&thread_convolute,(void*)&thread_args[rank]);
     }
+    
+    //collect all of the threads after they finish
+    for (rank=0;rank<THREAD_COUNT;rank++){
+    	pthread_join(thread_handles[rank],NULL);
+    }
+    free(thread_args);
+    free(thread_handles);
+}
+
+void* thread_convolute(void* args){
+   thread_arg* my_args = (thread_arg*) args;
+   long my_rank = my_args->rank;
+
+   //unpacking the struct
+   Image* srcImage = my_args->srcImage;
+   Image* destImage = my_args->destImage;
+   Matrix* algorithm = my_args->algorithm;
+
+   //figure out which block of image to work on
+   int thread_width = srcImage->height/THREAD_COUNT;
+   int first_row = my_rank * thread_width;
+   int last_row = first_row+thread_width;
+   //account for remainder incase of uneven division
+   if (my_rank == THREAD_COUNT-1){
+	last_row += srcImage->height%THREAD_COUNT;
+   }
+   //do the convolution
+   for(int row=first_row;row<last_row;row++){
+       for(int pixel = 0;pixel<srcImage->width;pixel++){
+	   for (int bit = 0;bit<srcImage->bpp;bit++){
+	       destImage->data[Index(pixel,row,srcImage->width,bit,srcImage->bpp)] = getPixelValue(srcImage,pixel,row,bit,algorithm);
+	   }
+       }
+   }
+   return NULL;
 }
 
 //Usage: Prints usage information for the program

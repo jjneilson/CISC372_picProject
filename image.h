@@ -19,7 +19,14 @@ typedef double Matrix[3][3];
 
 uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm);
 void convolute(Image* srcImage,Image* destImage,Matrix algorithm);
+void* thread_convolute(void* arg);
 int Usage();
 enum KernelTypes GetKernelType(char* type);
 
+typedef struct{
+    Image* srcImage;
+    Image* destImage;
+    Matrix* algorithm;
+    long rank;
+} thread_arg;
 #endif

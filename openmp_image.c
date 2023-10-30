@@ -4,6 +4,8 @@
 #include <string.h>
 #include "image.h"
 
+#define THREAD_COUNT 10
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
