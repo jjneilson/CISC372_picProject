@@ -1,6 +1,8 @@
 #ifndef ___IMAGE
 #define ___IMAGE
 #include <stdint.h>
+#include <pthread.h>
+#include <omp.h>
 
 #define Index(x,y,width,bit,bpp) y*width*bpp+bpp*x+bit
 
