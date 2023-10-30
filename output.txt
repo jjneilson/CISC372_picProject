@@ -1,0 +1,9 @@
+Script started on Mon Oct 30 17:24:45 2023
+]0;jneilson@r1n10.darwin:~/CISC372_picProject[?1034h[jneilson@r1n10 CISC372_picProject]$ ./pthread_image pi1 c1.jpg edge
+Took 6 seconds
+]0;jneilson@r1n10.darwin:~/CISC372_picProject[jneilson@r1n10 CISC372_picProject]$ ./p openmp_image pic1.jpg edge
+Took 6 seconds
+]0;jneilson@r1n10.darwin:~/CISC372_picProject[jneilson@r1n10 CISC372_picProject]$ exit
+exit
+
+Script done on Mon Oct 30 17:25:26 2023
