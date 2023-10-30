@@ -59,16 +59,27 @@ uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm){
 //            algorithm: The kernel matrix to use for the convolution
 //Returns: Nothing
 void convolute(Image* srcImage,Image* destImage,Matrix algorithm){
-    int rank,first_row,last_row,row,pix,bit,span;
+    int rank,first_row,last_row,row,pixel,bit,span;
     span=srcImage->bpp*srcImage->bpp;
     int thread_width = srcImage->height/THREAD_COUNT;
-    int
-    for (row=0;row<srcImage->height;row++){
-        for (pix=0;pix<srcImage->width;pix++){
-            for (bit=0;bit<srcImage->bpp;bit++){
-                destImage->data[Index(pix,row,srcImage->width,bit,srcImage->bpp)]=getPixelValue(srcImage,pix,row,bit,algorithm);
-            }
-        }
+    int extra_rows = srcImage->height%THREAD_COUNT;
+    # pragma omp parallel num_threads(THREAD_COUNT)\ 
+    	default(none) private(rank,first_row,last_row,row,pixel,bit)\
+	shared(thread_width,extra_rows,srcImage,destImage,algorithm)
+    {
+	rank = omp_get_thread_num();
+	first_row = rank*thread_width;
+	last_row = first_row+thread_width;
+	if(rank==THREAD_COUNT-1){
+	    last_row+=extra_rows;
+	}
+	for(row=first_row;row<last_row;row++){
+	    for(pixel=0;pixel<srcImage->width;pixel++){
+	        for(bit=0;bit<srcImage->bpp;bit++){
+		    destImage->data[Index(pixel,row,srcImage->width,bit,srcImage->bpp)] = getPixelValue(srcImage,pixel,row,bit,algorithm);
+		}
+	    }
+	}
     }
 }
 
